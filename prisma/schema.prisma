@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Unit {
+  id                 String                 @id @default(cuid())
+  name               String
+  serialNumber       String                 @unique
+  description        String?
+  kits               Kit[]
+  processExecutions  ProcessStepExecution[]
+  episodes           Episode[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+}
+
+model Kit {
+  id          String                 @id @default(cuid())
+  name        String
+  code        String                 @unique
+  unit        Unit?                  @relation(fields: [unitId], references: [id])
+  unitId      String?
+  components  ComponentLot[]
+  fixtures    Fixture[]
+  episodes    Episode[]
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+}
+
+model ComponentLot {
+  id             String        @id @default(cuid())
+  identifier     String
+  description    String?
+  quantity       Int
+  kit            Kit?          @relation(fields: [kitId], references: [id])
+  kitId          String?
+  measurements   Measurement[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model ProcessStepDefinition {
+  id           String                 @id @default(cuid())
+  name         String
+  description  String?
+  sequence     Int
+  ctqDefs      CTQDefinition[]
+  executions   ProcessStepExecution[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+}
+
+model ProcessStepExecution {
+  id                      String                 @id @default(cuid())
+  performedAt             DateTime               @default(now())
+  operator                String?
+  notes                   String?
+  unit                    Unit?                  @relation(fields: [unitId], references: [id])
+  unitId                  String?
+  kit                     Kit?                   @relation(fields: [kitId], references: [id])
+  kitId                   String?
+  fixture                 Fixture?               @relation(fields: [fixtureId], references: [id])
+  fixtureId               String?
+  processStepDefinition   ProcessStepDefinition  @relation(fields: [processStepDefinitionId], references: [id])
+  processStepDefinitionId String
+  episode                 Episode?               @relation(fields: [episodeId], references: [id])
+  episodeId               String?
+  measurements            Measurement[]
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+}
+
+model Measurement {
+  id                     String                 @id @default(cuid())
+  value                  Float
+  unitLabel              String
+  recordedAt             DateTime               @default(now())
+  notes                  String?
+  ctqDefinition          CTQDefinition          @relation(fields: [ctqDefinitionId], references: [id])
+  ctqDefinitionId        String
+  processStepExecution   ProcessStepExecution   @relation(fields: [processStepExecutionId], references: [id])
+  processStepExecutionId String
+  componentLot           ComponentLot?          @relation(fields: [componentLotId], references: [id])
+  componentLotId         String?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+}
+
+model CTQDefinition {
+  id                       String        @id @default(cuid())
+  name                     String
+  description              String?
+  lowerLimit               Float?
+  upperLimit               Float?
+  target                   Float?
+  measurementUnit          String
+  processStepDefinition    ProcessStepDefinition @relation(fields: [processStepDefinitionId], references: [id])
+  processStepDefinitionId  String
+  measurements             Measurement[]
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+}
+
+model Fixture {
+  id               String                 @id @default(cuid())
+  name             String
+  description      String?
+  kit              Kit?                   @relation(fields: [kitId], references: [id])
+  kitId            String?
+  processExecutions ProcessStepExecution[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+}
+
+model Episode {
+  id             String                 @id @default(cuid())
+  title          String
+  description    String?
+  startedAt      DateTime               @default(now())
+  endedAt        DateTime?
+  unit           Unit?                  @relation(fields: [unitId], references: [id])
+  unitId         String?
+  kit            Kit?                   @relation(fields: [kitId], references: [id])
+  kitId          String?
+  processRuns    ProcessStepExecution[]
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+}
